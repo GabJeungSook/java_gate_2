@@ -54,9 +54,9 @@ public class TurnstileGate implements INConnectorEvent  {
     }
     
       public TurnstileGate() {
-	  	//在构造方法中获取实例（单例）
+
         _Allocator = ConnectorAllocator.GetAllocator();
-        //添加事件通知
+     
         _Allocator.AddListener(this);
         try {
             String LocalIP = "1.0.0.67";
@@ -94,8 +94,8 @@ public class TurnstileGate implements INConnectorEvent  {
     
     public CommandDetail getCommandDetail() {
         TCPClientDetail tcpClient = new TCPClientDetail("1.0.0.67", 8000);
-        tcpClient.Timeout = 5000;//连接超时时间（毫秒）
-        tcpClient.RestartCount = 0;//重新连接次数		
+        tcpClient.Timeout = 5000;
+        tcpClient.RestartCount = 0;	
         Door8800Identity idt = new Door8800Identity("MC-5924T23010053", "FFFFFFFF", E_ControllerType.Door8900);
         CommandDetail commandDetail = new CommandDetail();
         commandDetail.Connector = tcpClient;
@@ -112,7 +112,7 @@ public class TurnstileGate implements INConnectorEvent  {
        @Override
     public void CommandProcessEvent(INCommand cmd) {
     	 //System.out.println("current command:"+cmd.getClass().toString()+",Current progress:"+cmd.getProcessStep()+"/"+cmd.getProcessMax() );
-        //当前命令:OpenDoor,当前进度:1/1
+   
          beginWatch();
     }
     
@@ -120,9 +120,9 @@ public class TurnstileGate implements INConnectorEvent  {
     public void ConnectorErrorEvent(INCommand cmd, boolean isStop) {
         String sCmd=cmd.getClass().toString();
          if (isStop) {
-                System.out.println(sCmd+"命令已手动停止!");
+          //     
             } else {
-                System.out.println(sCmd+"网络连接失败!");
+           //    
             }
         
     }
@@ -138,17 +138,17 @@ public class TurnstileGate implements INConnectorEvent  {
     
      @Override
     public void CommandTimeout(INCommand cmd) {          
-        System.out.println("命令超时:"+cmd.getClass().toString());
+       
     }
     
       @Override
     public void PasswordErrorEvent(INCommand cmd) {
-         System.out.println("通讯密码错误，已失败！");
+      
     }
     
      @Override
     public void ChecksumErrorEvent(INCommand cmd) {
-         System.out.println("命令返回的校验和错误，已失败！");
+        
     }
     
        public void openDoor(int door_number) {
@@ -170,7 +170,7 @@ public class TurnstileGate implements INConnectorEvent  {
                    String scanned_type = "";
                    String door_name = "Door1";
                    String request_type = "checking";
-                URL url = new URL("http://146.190.86.129/api/check-card");
+                URL url = new URL("http://usmgate.org/api/check-card");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 
                 connection.setRequestMethod("POST");
@@ -225,7 +225,7 @@ public class TurnstileGate implements INConnectorEvent  {
                               //save to database
                               request_type = "saving";
                               try{
-                                   URL url1 = new URL("http://146.190.86.129/api/check-card"); 
+                                   URL url1 = new URL("http://usmgate.org/api/check-card"); 
                                    HttpURLConnection connection1 = (HttpURLConnection) url1.openConnection();
                                     connection1.setRequestMethod("POST");
                                     connection1.setDoOutput(true);
@@ -290,7 +290,7 @@ public class TurnstileGate implements INConnectorEvent  {
 
             
             /*
-            包含 出入记录、alarm记录、软件开门消息、门磁消息等
+            
             */
 //             System.out.println("Event");
 //            System.out.print(event.toString());
@@ -323,12 +323,12 @@ public class TurnstileGate implements INConnectorEvent  {
        
     @Override
     public void ClientOnline(ConnectorDetail client) {
-		//需要将ConnectorDetail 类转为TCPClientDetail或者UDPDetail 具体子类对象
+	
     }
     
      @Override
     public void ClientOffline(ConnectorDetail client) {
-        //需要将ConnectorDetail 类转为TCPClientDetail或者UDPDetail 具体子类对象
+       
     }
        
        
