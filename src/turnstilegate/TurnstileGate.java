@@ -65,7 +65,7 @@ public class TurnstileGate implements INConnectorEvent  {
         //添加事件通知
         _Allocator.AddListener(this);
         try {
-            String LocalIP = "192.168.1.23";
+            String LocalIP = "192.168.1.151";
             int LocalPort = 8000;
             _Allocator.Listen(LocalIP, LocalPort);
             System.out.println("Listening....");
@@ -94,7 +94,7 @@ public class TurnstileGate implements INConnectorEvent  {
       
           
     public CommandDetail getCommandDetail() { 
-        TCPClientDetail tcpClient = new TCPClientDetail("192.168.1.23", 8000);
+        TCPClientDetail tcpClient = new TCPClientDetail("192.168.1.151", 8000);
         tcpClient.Timeout = 5000;//连接超时时间（毫秒）
         tcpClient.RestartCount = 0;//重新连接次数		
         Door8800Identity idt = new Door8800Identity("MC-5924T23010061", "FFFFFFFF", E_ControllerType.Door8900);
