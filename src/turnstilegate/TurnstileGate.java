@@ -14,7 +14,6 @@ import Door.Access.Connector.E_ControllerType;
 import Door.Access.Connector.INConnectorEvent;
 import Door.Access.Connector.TCPClient.TCPClientDetail;
 import Door.Access.Data.AbstractTransaction;
-import Door.Access.Data.BytesData;
 import Door.Access.Data.INData;
 import Door.Access.Door8800.Command.Data.CardTransaction;
 import Door.Access.Door8800.Command.Data.Door8800WatchTransaction;
@@ -36,6 +35,7 @@ import Door.Access.Door8800.Door8800Identity;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -103,15 +103,15 @@ public class TurnstileGate implements INConnectorEvent  {
     }
     
          
-      public void openDoor() {
-       CommandDetail commandDetail = getCommandDetail();//Get Command Detail Object
-       OpenDoor_Parameter parameter = new OpenDoor_Parameter(commandDetail); //声明远程开门命令参数对象
-        //设置开门参数 1-4 是门号，1是开门 0是不开门
-        parameter.Door.SetDoor(1, 1);
-        OpenDoor cmd = new OpenDoor(parameter);
-         //Add Command to Communication Connector Queue
-        _Allocator.AddCommand(cmd);
-    }
+//      public void openDoor() {
+//       CommandDetail commandDetail = getCommandDetail();//Get Command Detail Object
+//       OpenDoor_Parameter parameter = new OpenDoor_Parameter(commandDetail); //声明远程开门命令参数对象
+//        //设置开门参数 1-4 是门号，1是开门 0是不开门
+//        parameter.Door.SetDoor(1, 1);
+//        OpenDoor cmd = new OpenDoor(parameter);
+//         //Add Command to Communication Connector Queue
+//        _Allocator.AddCommand(cmd);
+//    }
     
     
         @Override
@@ -191,7 +191,7 @@ public class TurnstileGate implements INConnectorEvent  {
     
      @Override
     public void CommandProcessEvent(INCommand cmd) {
-        
+       // System.out.println(cmd.toString());
     	// System.out.println("current command:"+cmd.getClass().toString()+",Current progress:"+cmd.getProcessStep()+"/"+cmd.getProcessMax() + "identity:  " + cmd.GetIdentity());
         //当前命令:OpenDoor,当前进度:1/1
          beginWatch();
@@ -233,168 +233,118 @@ public class TurnstileGate implements INConnectorEvent  {
     }
        
     public void WatchEvent(ConnectorDetail detial, INData event) {
-              try {
-            Door8800WatchTransaction watchEvent = (Door8800WatchTransaction) event;
-          
-                  AbstractTransaction tr = (AbstractTransaction) watchEvent.EventData;
-                  CardTransaction card = (CardTransaction) watchEvent.EventData;
-                   boolean found = false;
-                   String cardFound = "";
-                   String door_scanned = "";
-                   String scanned_type = "";
-                   String door_name = "Door1";
-                   String request_type = "checking";
-                URL url = new URL("http://usmgate.org/api/check-card");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                
-                connection.setRequestMethod("POST");
-                connection.setDoOutput(true);
-                
-                if(card.DoorNum() == 2)
+            try {
+                Door8800WatchTransaction watchEvent = (Door8800WatchTransaction) event;
+                AbstractTransaction tr =  (AbstractTransaction) watchEvent.EventData;
+                switch(watchEvent.CmdIndex)
                 {
-                    door_scanned = "left";
-                    scanned_type = "entry";
-                }else{
-                    door_scanned = "right";
-                    scanned_type = "exit";
-                }
-                
-              String parameters = "id_number="+card.CardData+"&source="+door_scanned+"&scanned_type="+scanned_type+"&door_name="+door_name+"&request_type="+request_type+"";
-                
-                try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = parameters.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-                }
-                int responseCode = connection.getResponseCode();
-                
-                  if (responseCode == HttpURLConnection.HTTP_OK) {
-                       BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                       String line;
-                       StringBuilder response = new StringBuilder();
-                        while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-                    reader.close();
-                    connection.disconnect();  
-                    String responseData = response.toString();
-                     int successIndex = responseData.indexOf("\"success\":");
-                     int valueStart = responseData.indexOf(":", successIndex) + 1;
-                      int valueEnd = responseData.indexOf(",", valueStart);
-                        if (valueEnd == -1) {
-                        valueEnd = responseData.indexOf("}", valueStart);
-                        }
-                         String successValue = responseData.substring(valueStart, valueEnd).trim();
-                         boolean success = Boolean.parseBoolean(successValue);
-                         
-                         if(success)
-                         {
-                             System.out.println(responseData);
-                             System.out.println(event);
-                              CommandDetail commandDetail = getCommandDetail();
-                              OpenDoor_Parameter parameter = new OpenDoor_Parameter(commandDetail); 
-                              parameter.Door.SetDoor(card.DoorNum(), 1);
-                              OpenDoor cmd = new OpenDoor(parameter);
-                              _Allocator.AddCommand(cmd);
-                              
-                              //save to database
-                              request_type = "saving";
-                              try{
-                                   URL url1 = new URL("http://usmgate.org/api/check-card"); 
-                                   HttpURLConnection connection1 = (HttpURLConnection) url1.openConnection();
-                                    connection1.setRequestMethod("POST");
-                                    connection1.setDoOutput(true);
-                                     String parameters1 = "id_number="+card.CardData+"&source="+door_scanned+"&scanned_type="+scanned_type+"&door_name="+door_name+"&request_type="+request_type+"";
-                                     try (OutputStream os1 = connection1.getOutputStream()) {
-                                     byte[] input1 = parameters1.getBytes(StandardCharsets.UTF_8);
-                                     os1.write(input1, 0, input1.length);
-                                     }
-                                      int responseCode1 = connection1.getResponseCode();
-                                       if (responseCode1 == HttpURLConnection.HTTP_OK) {
-                                            BufferedReader reader1 = new BufferedReader(new InputStreamReader(connection1.getInputStream()));
-                                            String line1;
-                                            StringBuilder response1 = new StringBuilder();
-                                             while ((line1 = reader1.readLine()) != null) {
-                                                    response1.append(line1);
-                                             }
-                                              reader1.close();
-                                              connection1.disconnect(); 
-                                              System.out.println("saved to database");
-                                       }
-                              }catch(Exception e)
-                              {
-                                   System.out.println(e.toString());
-                              }
-                             
-//                                 if (responseCode == HttpURLConnection.HTTP_OK) {
-//                                      
-//                                        System.out.println("saved to database");
-//                                 }else{
-//                                      System.out.println("failed saving to database");
-//                                 }
-                         }else{
-                             System.out.println(parameters);
-                         }
-                     
-                            
-                } else {
-                     System.out.println("API Request failed with response code: " + responseCode);
-                }
-                
-                  
-//                if (responseCode == HttpURLConnection.HTTP_OK) { 
-//                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//                    String line;
-//                    StringBuilder response = new StringBuilder();
-////
-//                    while ((line = reader.readLine()) != null) {
-//                        response.append(line);
-//                    }
-//                    reader.close();
-////
-////                   
-//                    String responseData = response.toString();
-//                    System.out.print(responseData);
-                            //open door     
-//                            
+                    case 1:
+                          CardTransaction card = (CardTransaction) watchEvent.EventData;
 
+        String doorScanned = card.DoorNum() == 2 ? "left" : "right";
+        String scannedType = card.DoorNum() == 2 ? "entry" : "exit";
+        String door_name = "Door1";
+        String request_type = "checking";
+        StringBuilder parameters = new StringBuilder();
+        parameters.append("id_number=").append(card.CardData)
+                 .append("&source=").append(doorScanned)
+                 .append("&scanned_type=").append(scannedType)
+                 .append("&door_name=").append(door_name)
+                 .append("&request_type=").append(request_type);
 
-//                } else {
-//                    System.out.println("API Request failed with response code: " + responseCode);
-//                }
+        URL url = new URL("http://usmgate.org/api/check-card");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setDoOutput(true);
 
+        try (OutputStream os = connection.getOutputStream()) {
+            byte[] input = parameters.toString().getBytes(StandardCharsets.UTF_8);
+            os.write(input, 0, input.length);
+        }
+
+        int responseCode = connection.getResponseCode();
+
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String line;
+            StringBuilder response = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+            connection.disconnect();
+
+            String responseData = response.toString();
+            boolean success = Boolean.parseBoolean(parseSuccessValue(responseData));
+
+            if (success) {
+                System.out.println(responseData);
+                System.out.println(event);
+                
+                //open door
               
 
-            
-            /*
-            
-            */
-//             System.out.println("Event");
-//            System.out.print(event.toString());
-//            StringBuilder strBuf = new StringBuilder(100);
-//            strBuf.append("Data monitoring:");
-//            if (event instanceof Door.Access.Door89H.Command.Data.CardTransaction) {
-//                  Door8800WatchTransaction watchEvent = (Door8800WatchTransaction) event;
-//                  AbstractTransaction tr = (AbstractTransaction) watchEvent.EventData;
-//                  CardTransaction card = (CardTransaction) watchEvent.EventData;
-//                   if ("12339606".equals(card.CardData)) { 
-//                       System.out.print(card.CardData);
-//                 // Test test = new Test();
-//        
-//                            //test.openDoor();
-//                   }
-////                Door8800WatchTransaction WatchTransaction = (Door8800WatchTransaction) event;
-////                strBuf.append("，SN：");
-////                strBuf.append(WatchTransaction.SN);
-////                strBuf.append("\n");
-//            } else {
-//                strBuf.append("，Unknown Event：");
-//                strBuf.append(event.getClass().getName());
-//            }
-           // System.out.println(strBuf);
-        } catch (Exception e) {
-            System.out.println("doorAccessiodemo.frmMain.WatchEvent() -- " + e.toString());
+                // Consider making database update asynchronous if not critical
+                request_type = "saving";
+                try{
+                    URL url1 = new URL("http://usmgate.org/api/check-card");
+                    HttpURLConnection connection1 = (HttpURLConnection) url1.openConnection();
+                    connection1.setDoOutput(true);
+                     
+                    String parameters1 = "id_number="+card.CardData+"&source="+doorScanned+"&scanned_type="+scannedType+"&door_name="+door_name+"&request_type="+request_type+"";
+                    try (OutputStream os1 = connection1.getOutputStream()) {
+                        byte[] input1 = parameters1.getBytes(StandardCharsets.UTF_8);
+                        os1.write(input1, 0, input1.length);
+                    }
+                    int responseCode1 = connection1.getResponseCode();
+                    if (responseCode1 == HttpURLConnection.HTTP_OK) {
+                        BufferedReader reader1 = new BufferedReader(new InputStreamReader(connection1.getInputStream()));
+                        String line1;
+                        StringBuilder response1 = new StringBuilder();
+                        while ((line1 = reader1.readLine()) != null) {
+                            response1.append(line1);
+                        }
+                        reader1.close();
+                        connection1.disconnect();
+                        System.out.println("saved to database");
+                    }
+                }catch(Exception e)
+                {
+                    System.out.println(e.toString());
+                }finally {
+                      OpenDoor_Parameter parameter = new OpenDoor_Parameter(getCommandDetail());
+                      parameter.Door.SetDoor(card.DoorNum(), 1);
+                      OpenDoor cmd = new OpenDoor(parameter);
+                      _Allocator.AddCommand(cmd);
+
+                }
+            }
+        } else {
+            System.out.println("API Request failed with response code: " + responseCode);
         }
+                }
+              
+
+    } catch (Exception e) {
+        System.out.println("doorAccessiodemo.frmMain.WatchEvent() -- " + e.toString());
     }
+    }
+    
+            private String parseSuccessValue(String responseData) {
+            int successIndex = responseData.indexOf("\"success\":");
+            if (successIndex == -1) {
+                // Handle case where "success" key is not found
+                return "false"; // Or throw an exception
+            }
+
+            int valueStart = responseData.indexOf(":", successIndex) + 1;
+            int valueEnd = responseData.indexOf(",", valueStart);
+            if (valueEnd == -1) {
+                valueEnd = responseData.indexOf("}", valueStart);
+            }
+
+            return responseData.substring(valueStart, valueEnd).trim();
+        }
     
        
     @Override
