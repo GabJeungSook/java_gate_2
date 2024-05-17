@@ -330,6 +330,8 @@ public class TurnstileGate implements INConnectorEvent  {
 //                                 }else{
 //                                      System.out.println("failed saving to database");
 //                                 }
+                         }else{
+                             System.out.println(parameters);
                          }
                      
                             
