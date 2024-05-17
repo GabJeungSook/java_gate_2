@@ -29,13 +29,13 @@ import Door.Access.Door8800.Command.System.BeginWatch;
 import Door.Access.Door8800.Command.System.Parameter.WriteKeepAliveInterval_Parameter;
 import Door.Access.Door8800.Command.System.Parameter.WriteTCPSetting_Parameter;
 import Door.Access.Door8800.Command.System.ReadTCPSetting;
+import Door.Access.Door8800.Command.System.Result.ReadTCPSetting_Result;
 import Door.Access.Door8800.Command.System.WriteKeepAliveInterval;
 import Door.Access.Door8800.Command.System.WriteTCPSetting;
 import Door.Access.Door8800.Door8800Identity;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -116,46 +116,48 @@ public class TurnstileGate implements INConnectorEvent  {
     
         @Override
     public void CommandCompleteEvent(INCommand cmd, INCommandResult result) {
-        
-        if(cmd instanceof ReadReaderWorkSetting)
-        {
-            ReadReaderWorkSetting_Result ret = (ReadReaderWorkSetting_Result) result;
-            System.out.println(ret.DoorNum+"号门 星期一认证方式");
-            DayTimeGroup_ReaderWork day1 = ret.ReaderWork.GetItem(E_WeekDay.Monday);//获取星期一的认证方式
-            TimeSegment_ReaderWork time1 = day1.GetItem(1);//1-8时段
-            short[] beginTime = new  short[2];
-            time1.GetBeginTime(beginTime);
-            short[] endTime = new  short[2];
-            time1.GetEndTime(endTime);
-            System.out.println("时段1开始时间："+beginTime[0]+":"+beginTime[1]);
-            System.out.println("时段1结束时间："+endTime[0]+":"+endTime[1]);
-            System.out.println("仅读卡："+time1.GetWorkType(TimeSegment_ReaderWork.ReaderWorkType.OnlyCard));
-            System.out.println("仅密码："+time1.GetWorkType(TimeSegment_ReaderWork.ReaderWorkType.OnlyPassword));
-            System.out.println("读卡加密码："+time1.GetWorkType(TimeSegment_ReaderWork.ReaderWorkType.CardAndPassword));
-            System.out.println("手动输入卡号+密码："+time1.GetWorkType(TimeSegment_ReaderWork.ReaderWorkType.InputCardAndPassword));
-        }
+//        
+//        if(cmd instanceof ReadReaderWorkSetting)
+//        {
+//            ReadReaderWorkSetting_Result ret = (ReadReaderWorkSetting_Result) result;
+//            System.out.println(ret.DoorNum+"号门 星期一认证方式");
+//            DayTimeGroup_ReaderWork day1 = ret.ReaderWork.GetItem(E_WeekDay.Monday);//获取星期一的认证方式
+//            TimeSegment_ReaderWork time1 = day1.GetItem(1);//1-8时段
+//            short[] beginTime = new  short[2];
+//            time1.GetBeginTime(beginTime);
+//            short[] endTime = new  short[2];
+//            time1.GetEndTime(endTime);
+//            System.out.println("时段1开始时间："+beginTime[0]+":"+beginTime[1]);
+//            System.out.println("时段1结束时间："+endTime[0]+":"+endTime[1]);
+//            System.out.println("仅读卡："+time1.GetWorkType(TimeSegment_ReaderWork.ReaderWorkType.OnlyCard));
+//            System.out.println("仅密码："+time1.GetWorkType(TimeSegment_ReaderWork.ReaderWorkType.OnlyPassword));
+//            System.out.println("读卡加密码："+time1.GetWorkType(TimeSegment_ReaderWork.ReaderWorkType.CardAndPassword));
+//            System.out.println("手动输入卡号+密码："+time1.GetWorkType(TimeSegment_ReaderWork.ReaderWorkType.InputCardAndPassword));
+//        }
   
            // beginWatch();
-//          if (result instanceof ReadTCPSetting_Result) {
-//            System.out.println("Read device TCP parameters successfully");
-//            ReadTCPSetting_Result tcpResult = (ReadTCPSetting_Result) result;
-//            writeTCPSetting(tcpResult.TCP);
-//          
-//        }
-//           if (cmd instanceof WriteTCPSetting) {
-//            System.out.println("Writing device TCP parameters successfully");
-//        }
+          if (result instanceof ReadTCPSetting_Result) {
+            System.out.println("Read device TCP parameters successfully");
+            ReadTCPSetting_Result tcpResult = (ReadTCPSetting_Result) result;
+            
+           // writeTCPSetting(tcpResult.TCP);
+          
+        }
+           if (cmd instanceof WriteTCPSetting) {
+            System.out.println("Writing device TCP parameters successfully");
+           // beginWatch();
+        }
 ////           
-//         if (cmd instanceof BeginWatch) {
-//            System.out.println("Device monitoring enabled successfully");
-//       
-//            writeKeepAliveInterval();
-//        }
-//          if (cmd instanceof WriteKeepAliveInterval) {
-//            System.out.println("Write the keep-alive interval successfully");
-//             System.out.println("End of setup process");
-//            System.out.println("Wait for device to connect");
-//        }
+         if (cmd instanceof BeginWatch) {
+            System.out.println("Device monitoring enabled successfully");
+       
+         //   writeKeepAliveInterval();
+        }
+          if (cmd instanceof WriteKeepAliveInterval) {
+            System.out.println("Write the keep-alive interval successfully");
+             System.out.println("End of setup process");
+            System.out.println("Wait for device to connect");
+        }
          if (cmd instanceof OpenDoor) {
              //saving 
              
@@ -192,7 +194,7 @@ public class TurnstileGate implements INConnectorEvent  {
      @Override
     public void CommandProcessEvent(INCommand cmd) {
        // System.out.println(cmd.toString());
-    	// System.out.println("current command:"+cmd.getClass().toString()+",Current progress:"+cmd.getProcessStep()+"/"+cmd.getProcessMax() + "identity:  " + cmd.GetIdentity());
+    	 //System.out.println("Current progress:"+cmd.getProcessStep()+"/"+cmd.getProcessMax());
         //当前命令:OpenDoor,当前进度:1/1
          beginWatch();
     }
@@ -349,7 +351,6 @@ public class TurnstileGate implements INConnectorEvent  {
        
     @Override
     public void ClientOnline(ConnectorDetail client) {
-	
     }
     
      @Override
