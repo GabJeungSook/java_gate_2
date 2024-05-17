@@ -14,17 +14,13 @@ import Door.Access.Connector.E_ControllerType;
 import Door.Access.Connector.INConnectorEvent;
 import Door.Access.Connector.TCPClient.TCPClientDetail;
 import Door.Access.Data.AbstractTransaction;
+import Door.Access.Data.BytesData;
 import Door.Access.Data.INData;
 import Door.Access.Door8800.Command.Data.CardTransaction;
 import Door.Access.Door8800.Command.Data.Door8800WatchTransaction;
-import Door.Access.Door8800.Command.Data.E_WeekDay;
 import Door.Access.Door8800.Command.Data.TCPDetail;
-import Door.Access.Door8800.Command.Data.TimeGroup.DayTimeGroup_ReaderWork;
-import Door.Access.Door8800.Command.Data.TimeGroup.TimeSegment_ReaderWork;
 import Door.Access.Door8800.Command.Door.OpenDoor;
 import Door.Access.Door8800.Command.Door.Parameter.OpenDoor_Parameter;
-import Door.Access.Door8800.Command.Door.ReadReaderWorkSetting;
-import Door.Access.Door8800.Command.Door.Result.ReadReaderWorkSetting_Result;
 import Door.Access.Door8800.Command.System.BeginWatch;
 import Door.Access.Door8800.Command.System.Parameter.WriteKeepAliveInterval_Parameter;
 import Door.Access.Door8800.Command.System.Parameter.WriteTCPSetting_Parameter;
@@ -33,12 +29,19 @@ import Door.Access.Door8800.Command.System.Result.ReadTCPSetting_Result;
 import Door.Access.Door8800.Command.System.WriteKeepAliveInterval;
 import Door.Access.Door8800.Command.System.WriteTCPSetting;
 import Door.Access.Door8800.Door8800Identity;
+import Door.Access.Door8800.Packet.Door8800Decompile;
+import Door.Access.Door8800.Packet.Door8800PacketModel;
+import Door.Access.Packet.INPacketModel;
+import Door.Access.Packet.PacketDecompileAllocator;
+import io.netty.buffer.ByteBuf;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.Semaphore;
 /**
  *
@@ -48,6 +51,7 @@ public class TurnstileGate implements INConnectorEvent  {
      private ConnectorAllocator _Allocator;
      private String LocalIP;
      private int LocalPort;
+     HashMap<String, TCPClientDetail> TcpDictionary = new HashMap<String, TCPClientDetail>();
      private final Semaphore available = new Semaphore(0, true);
     /**
      * @param args the command line arguments
@@ -140,12 +144,12 @@ public class TurnstileGate implements INConnectorEvent  {
             System.out.println("Read device TCP parameters successfully");
             ReadTCPSetting_Result tcpResult = (ReadTCPSetting_Result) result;
             
-           // writeTCPSetting(tcpResult.TCP);
+            writeTCPSetting(tcpResult.TCP);
           
         }
            if (cmd instanceof WriteTCPSetting) {
             System.out.println("Writing device TCP parameters successfully");
-           // beginWatch();
+            beginWatch();
         }
 ////           
          if (cmd instanceof BeginWatch) {
@@ -194,9 +198,14 @@ public class TurnstileGate implements INConnectorEvent  {
      @Override
     public void CommandProcessEvent(INCommand cmd) {
        // System.out.println(cmd.toString());
+       if(cmd instanceof BeginWatch)
+       {
+            beginWatch();
+       }
+
     	 //System.out.println("Current progress:"+cmd.getProcessStep()+"/"+cmd.getProcessMax());
         //当前命令:OpenDoor,当前进度:1/1
-         beginWatch();
+        
     }
     
       @Override
@@ -235,6 +244,7 @@ public class TurnstileGate implements INConnectorEvent  {
     }
        
     public void WatchEvent(ConnectorDetail detial, INData event) {
+            
             try {
                 Door8800WatchTransaction watchEvent = (Door8800WatchTransaction) event;
                 AbstractTransaction tr =  (AbstractTransaction) watchEvent.EventData;
@@ -282,11 +292,7 @@ public class TurnstileGate implements INConnectorEvent  {
             if (success) {
                 System.out.println(responseData);
                 System.out.println(event);
-                
-                //open door
-              
-
-                // Consider making database update asynchronous if not critical
+               
                 request_type = "saving";
                 try{
                     URL url1 = new URL("http://usmgate.org/api/check-card");
@@ -320,16 +326,38 @@ public class TurnstileGate implements INConnectorEvent  {
                       _Allocator.AddCommand(cmd);
 
                 }
-            }
-        } else {
-            System.out.println("API Request failed with response code: " + responseCode);
-        }
+                    }
+                } else {
+                    System.out.println("API Request failed with response code: " + responseCode);
+                }
+        break;
                 }
               
 
     } catch (Exception e) {
         System.out.println("doorAccessiodemo.frmMain.WatchEvent() -- " + e.toString());
     }
+    }
+    
+    
+    private void authentication(ConnectorDetail detail, INData event)
+    {
+        BytesData b = (BytesData) event;
+        TCPClientDetail tcp = (TCPClientDetail) detail;
+        ByteBuf dBuf = b.GetBytes();
+        if(dBuf.getByte(0) == 0x7e)
+        {
+            Door8800Decompile decompile = new Door8800Decompile();
+            ArrayList<INPacketModel> oRetPack = new ArrayList<INPacketModel>(10);
+            if(decompile.Decompile(dBuf, oRetPack))
+            {
+                Door8800PacketModel m = (Door8800PacketModel) oRetPack.get(0);
+                String sn = m.GetSN();
+                TcpDictionary.put(sn, tcp);
+                _Allocator.AddWatchDecompile(tcp, PacketDecompileAllocator.GetDecompile(E_ControllerType.Door8900));
+                
+            }
+        }
     }
     
             private String parseSuccessValue(String responseData) {
