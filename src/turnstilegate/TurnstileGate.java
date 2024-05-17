@@ -194,7 +194,7 @@ public class TurnstileGate implements INConnectorEvent  {
         
     	// System.out.println("current command:"+cmd.getClass().toString()+",Current progress:"+cmd.getProcessStep()+"/"+cmd.getProcessMax() + "identity:  " + cmd.GetIdentity());
         //当前命令:OpenDoor,当前进度:1/1
-         //beginWatch();
+         beginWatch();
     }
     
       @Override
@@ -235,6 +235,7 @@ public class TurnstileGate implements INConnectorEvent  {
     public void WatchEvent(ConnectorDetail detial, INData event) {
               try {
             Door8800WatchTransaction watchEvent = (Door8800WatchTransaction) event;
+          
                   AbstractTransaction tr = (AbstractTransaction) watchEvent.EventData;
                   CardTransaction card = (CardTransaction) watchEvent.EventData;
                    boolean found = false;
