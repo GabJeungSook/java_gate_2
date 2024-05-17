@@ -14,17 +14,10 @@ import Door.Access.Connector.E_ControllerType;
 import Door.Access.Connector.INConnectorEvent;
 import Door.Access.Connector.TCPClient.TCPClientDetail;
 import Door.Access.Data.AbstractTransaction;
-import Door.Access.Data.BytesData;
 import Door.Access.Data.INData;
-import Door.Access.Door8800.Command.Data.AlarmTransaction;
-import Door.Access.Door8800.Command.Data.ButtonTransaction;
 import Door.Access.Door8800.Command.Data.CardTransaction;
-import Door.Access.Door8800.Command.Data.DefinedTransaction;
 import Door.Access.Door8800.Command.Data.Door8800WatchTransaction;
-import Door.Access.Door8800.Command.Data.DoorSensorTransaction;
 import Door.Access.Door8800.Command.Data.E_WeekDay;
-import Door.Access.Door8800.Command.Data.SoftwareTransaction;
-import Door.Access.Door8800.Command.Data.SystemTransaction;
 import Door.Access.Door8800.Command.Data.TCPDetail;
 import Door.Access.Door8800.Command.Data.TimeGroup.DayTimeGroup_ReaderWork;
 import Door.Access.Door8800.Command.Data.TimeGroup.TimeSegment_ReaderWork;
@@ -36,6 +29,7 @@ import Door.Access.Door8800.Command.System.BeginWatch;
 import Door.Access.Door8800.Command.System.Parameter.WriteKeepAliveInterval_Parameter;
 import Door.Access.Door8800.Command.System.Parameter.WriteTCPSetting_Parameter;
 import Door.Access.Door8800.Command.System.ReadTCPSetting;
+import Door.Access.Door8800.Command.System.Result.ReadTCPSetting_Result;
 import Door.Access.Door8800.Command.System.WriteKeepAliveInterval;
 import Door.Access.Door8800.Command.System.WriteTCPSetting;
 import Door.Access.Door8800.Door8800Identity;
@@ -68,7 +62,7 @@ public class TurnstileGate implements INConnectorEvent  {
             String LocalIP = "192.168.1.151";
             int LocalPort = 8000;
             _Allocator.Listen(LocalIP, LocalPort);
-            System.out.println("Listening to gate 2....");
+            System.out.println("Listening....");
             readTCPSetting();
         } catch (Exception e) {
             // Handle the exception
@@ -94,11 +88,15 @@ public class TurnstileGate implements INConnectorEvent  {
       
           
     public CommandDetail getCommandDetail() { 
-        TCPClientDetail tcpClient = new TCPClientDetail("192.168.1.151", 8000);
-        tcpClient.Timeout = 10000;//连接超时时间（毫秒）
-        tcpClient.RestartCount = 0;//重新连接次数		
-        Door8800Identity idt = new Door8800Identity("MC-5924T23010061", "FFFFFFFF", E_ControllerType.Door8900);
         CommandDetail commandDetail = new CommandDetail();
+        commandDetail.Timeout = 5000;
+        commandDetail.RestartCount = 0;
+        
+        TCPClientDetail tcpClient = new TCPClientDetail("192.168.1.151", 8000);
+        tcpClient.Timeout = 5000;//连接超时时间（毫秒）
+        tcpClient.RestartCount = 0;//重新连接次数	
+        Door8800Identity idt = new Door8800Identity("MC-5924T23010061", "ffffffff", E_ControllerType.Door8900);
+//        CommandDetail commandDetail = new CommandDetail();
         commandDetail.Connector = tcpClient;
         commandDetail.Identity = idt;
         return  commandDetail;
@@ -142,22 +140,22 @@ public class TurnstileGate implements INConnectorEvent  {
 //            System.out.println("Read device TCP parameters successfully");
 //            ReadTCPSetting_Result tcpResult = (ReadTCPSetting_Result) result;
 //            writeTCPSetting(tcpResult.TCP);
+//          
 //        }
 //           if (cmd instanceof WriteTCPSetting) {
 //            System.out.println("Writing device TCP parameters successfully");
-//            
 //        }
-//           
+////           
 //         if (cmd instanceof BeginWatch) {
 //            System.out.println("Device monitoring enabled successfully");
 //       
 //            writeKeepAliveInterval();
 //        }
-//          if (cmd instanceof WriteKeepAliveInterval) {
-//            System.out.println("Write the keep-alive interval successfully");
-//             System.out.println("End of setup process");
-//            System.out.println("Wait for device to connect");
-//        }
+          if (cmd instanceof WriteKeepAliveInterval) {
+            System.out.println("Write the keep-alive interval successfully");
+             System.out.println("End of setup process");
+            System.out.println("Wait for device to connect");
+        }
          if (cmd instanceof OpenDoor) {
              //saving 
              
@@ -193,9 +191,10 @@ public class TurnstileGate implements INConnectorEvent  {
     
      @Override
     public void CommandProcessEvent(INCommand cmd) {
-    	 //System.out.println("current command:"+cmd.getClass().toString()+",Current progress:"+cmd.getProcessStep()+"/"+cmd.getProcessMax() );
+        
+    	// System.out.println("current command:"+cmd.getClass().toString()+",Current progress:"+cmd.getProcessStep()+"/"+cmd.getProcessMax() + "identity:  " + cmd.GetIdentity());
         //当前命令:OpenDoor,当前进度:1/1
-         beginWatch();
+         //beginWatch();
     }
     
       @Override
@@ -219,7 +218,7 @@ public class TurnstileGate implements INConnectorEvent  {
     }
     
        @Override
-    public void CommandTimeout(INCommand cmd) {          
+    public void CommandTimeout(INCommand cmd) {
         System.out.println("Command timeout:"+cmd.getClass().toString());
     }
     
