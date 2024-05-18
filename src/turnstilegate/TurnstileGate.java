@@ -63,7 +63,7 @@ public class TurnstileGate implements INConnectorEvent  {
         //添加事件通知
         _Allocator.AddListener(this);
         try {
-            String LocalIP = "192.168.1.151";
+            String LocalIP = "192.168.1.150";
             int LocalPort = 8000;
             _Allocator.Listen(LocalIP, LocalPort);
             System.out.println("Listening....");
@@ -96,10 +96,10 @@ public class TurnstileGate implements INConnectorEvent  {
         commandDetail.Timeout = 5000;
         commandDetail.RestartCount = 0;
         
-        TCPClientDetail tcpClient = new TCPClientDetail("192.168.1.151", 8000);
+        TCPClientDetail tcpClient = new TCPClientDetail("192.168.1.150", 8000);
         tcpClient.Timeout = 5000;//连接超时时间（毫秒）
         tcpClient.RestartCount = 0;//重新连接次数	
-        Door8800Identity idt = new Door8800Identity("MC-5924T23010061", "ffffffff", E_ControllerType.Door8900);
+        Door8800Identity idt = new Door8800Identity("MC-5924T23010053", "ffffffff", E_ControllerType.Door8900);
 //        CommandDetail commandDetail = new CommandDetail();
         commandDetail.Connector = tcpClient;
         commandDetail.Identity = idt;
@@ -255,7 +255,7 @@ public class TurnstileGate implements INConnectorEvent  {
 
         String doorScanned = card.DoorNum() == 2 ? "left" : "right";
         String scannedType = card.DoorNum() == 2 ? "entry" : "exit";
-        String door_name = "Door1";
+        String door_name = "Door2";
         String request_type = "checking";
         StringBuilder parameters = new StringBuilder();
         parameters.append("id_number=").append(card.CardData)
