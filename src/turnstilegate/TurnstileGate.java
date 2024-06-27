@@ -63,7 +63,7 @@ public class TurnstileGate implements INConnectorEvent  {
         //添加事件通知
         _Allocator.AddListener(this);
         try {
-            String LocalIP = "192.168.1.150";
+            String LocalIP = "192.168.1.151";
             int LocalPort = 8000;
             _Allocator.Listen(LocalIP, LocalPort);
             System.out.println("Listening....");
